@@ -34,9 +34,9 @@ const WSManager = (() => {
             const timeout = setTimeout(() => {
                 if (ws && ws.readyState !== WebSocket.OPEN) {
                     ws.close();
-                    reject(new Error('Connection timeout. Not on ESP WiFi?'));
+                    reject(new Error('Connection timeout (8s). Check IP and ensure you are on the same WiFi map.'));
                 }
-            }, 3000);
+            }, 8000);
 
             ws.onopen = () => {
                 clearTimeout(timeout);
@@ -45,8 +45,13 @@ const WSManager = (() => {
 
             ws.onerror = (err) => {
                 clearTimeout(timeout);
-                console.error('[WS] Error', err);
-                reject(new Error('WebSocket error. Not on ESP WiFi?'));
+                console.error('[WS] Error connection to', _wsUrl, ':', err);
+
+                if (window.location.protocol === 'https:') {
+                    reject(new Error('Browser blocked local IP on HTTPS. Host this via local python HTTP or use ngrok.'));
+                } else {
+                    reject(new Error('WebSocket connection refused. Is the IP correct?'));
+                }
             };
 
             ws.onclose = () => {
