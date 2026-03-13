@@ -1,0 +1,458 @@
+/* ════════════════════════════════════════════════
+   BikeNav — Dark-mode mobile-first styles
+   ESP8266 TFT Pixel Streaming Version
+   ════════════════════════════════════════════════ */
+
+/* ── Reset ── */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: 'Roboto', sans-serif;
+  background: #0f0f14;
+  color: #e0e0e0;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Top Bar ── */
+#topBar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1100;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  background: rgba(15, 15, 20, .88);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, .04);
+}
+
+.top-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-mark {
+  color: #4fc3f7;
+  display: flex;
+  align-items: center;
+}
+
+.app-name {
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: .4px;
+  background: linear-gradient(135deg, #4fc3f7 0%, #00e676 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.top-right {
+  display: flex;
+  gap: 6px;
+}
+
+/* Status chips */
+.status-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .05);
+  border-radius: 20px;
+  padding: 3px 10px 3px 7px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #888;
+  transition: all .3s;
+}
+
+.status-chip.active {
+  color: #fff;
+  border-color: rgba(255, 255, 255, .1);
+}
+
+.chip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #444;
+  transition: all .3s;
+}
+
+.chip-dot.active.gps-dot {
+  background: #00e676;
+  box-shadow: 0 0 6px rgba(0, 230, 118, .6);
+  animation: gpsPulse 2s infinite;
+}
+
+.chip-dot.active.ws-dot {
+  background: #4fc3f7;
+  box-shadow: 0 0 6px rgba(79, 195, 247, .6);
+  animation: bleGlow 2.5s infinite;
+}
+
+@keyframes gpsPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 230, 118, .45);
+  }
+
+  70% {
+    box-shadow: 0 0 0 7px rgba(0, 230, 118, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 230, 118, 0);
+  }
+}
+
+@keyframes bleGlow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 4px rgba(79, 195, 247, .5);
+  }
+
+  50% {
+    box-shadow: 0 0 12px rgba(79, 195, 247, .7), 0 0 22px rgba(79, 195, 247, .2);
+  }
+}
+
+/* ── Main UI Map ── */
+#uiMap {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+}
+
+/* Leaflet dark tiles */
+.leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(.92) contrast(1.1) saturate(.3);
+}
+
+.leaflet-control-attribution {
+  background: rgba(15, 15, 20, .7) !important;
+  color: #666 !important;
+  font-size: 9px !important;
+}
+
+/* ── Hidden TFT Render Targets ── */
+/* 
+  We hide the actual generation DOM offscreen or scale it down.
+  The tftComposite canvas is what we display as the preview. 
+*/
+#tftRenderWrap {
+  position: fixed;
+  top: 58px;
+  right: 10px;
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: opacity .3s, transform .3s;
+}
+
+#tftRenderWrap.minimized {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(.8);
+}
+
+.preview-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #c9c9c9;
+  margin-bottom: 3px;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* We need the tft map to be exactly 128x160 to snapshot it */
+#tftMap {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  width: 128px;
+  height: 160px;
+}
+
+/* The final composite preview */
+#tftComposite {
+  width: 128px;
+  height: 160px;
+  /* 1.8" TFT is usually 128x160 portrait */
+  background: #000;
+  border: 2px solid #2a2a30;
+  border-radius: 4px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, .5);
+  cursor: pointer;
+}
+
+/* Overlay assets for TFT drawn onto composite */
+#tftArrowCanvas {
+  display: none;
+}
+
+#tftDistance {
+  display: none;
+}
+
+/* ── Bottom Panel (same as before) ── */
+.nav-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1050;
+  background: rgba(18, 18, 24, .92);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, .05);
+  border-radius: 22px 22px 0 0;
+  padding: 4px 16px 24px;
+  transition: transform .4s cubic-bezier(.4, 0, .15, 1);
+}
+
+.nav-panel.collapsed {
+  transform: translateY(calc(100% - 130px));
+}
+
+.panel-handle {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 10px;
+  cursor: grab;
+}
+
+.panel-handle span {
+  width: 34px;
+  height: 4px;
+  background: rgba(255, 255, 255, .15);
+  border-radius: 4px;
+}
+
+.turn-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.turn-icon-box {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 235, 59, .08);
+  border: 1px solid rgba(255, 235, 59, .1);
+  border-radius: 16px;
+  flex-shrink: 0;
+}
+
+.turn-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.turn-distance {
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+  letter-spacing: -.5px;
+}
+
+.turn-street {
+  font-size: 12px;
+  color: #888;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  border-top: 1px solid rgba(255, 255, 255, .05);
+  border-bottom: 1px solid rgba(255, 255, 255, .05);
+  margin-bottom: 10px;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.stat-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  color: #666;
+}
+
+.progress-wrap {
+  margin-bottom: 14px;
+  display: none;
+}
+
+.progress-wrap.visible {
+  display: block;
+}
+
+.progress-track {
+  height: 3px;
+  background: rgba(255, 255, 255, .06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #4fc3f7, #00e676);
+  transition: width .6s ease;
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.nav-btn {
+  flex: 1;
+  min-width: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 12px 8px;
+  border: none;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.nav-btn:active {
+  transform: scale(.94);
+}
+
+.nav-btn.accent {
+  background: linear-gradient(135deg, #4fc3f7, #039be5);
+  box-shadow: 0 4px 18px rgba(79, 195, 247, .25);
+}
+
+.nav-btn.danger {
+  background: linear-gradient(135deg, #ef5350, #c62828);
+}
+
+.nav-btn.glass {
+  background: rgba(255, 255, 255, .06);
+  color: #bbb;
+  border: 1px solid rgba(255, 255, 255, .06);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ── Toast ── */
+#toastContainer {
+  position: fixed;
+  top: 58px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.toast {
+  background: rgba(28, 28, 36, .94);
+  color: #eee;
+  padding: 10px 22px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: all .3s;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Custom Leaflet markers ── */
+.bike-marker {
+  width: 18px;
+  height: 18px;
+  background: #00e676;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(0, 230, 118, .5);
+  animation: markerPulse 2s infinite;
+}
+
+.dest-marker {
+  width: 14px;
+  height: 14px;
+  background: #ef5350;
+  border: 2px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 2px 8px rgba(239, 83, 80, .4);
+}
+
+/* TFT-specific minimal markers (no dropshadows required, pixel-perfect sharp) */
+.tft-bike-marker {
+  width: 12px;
+  height: 12px;
+  background: #00e676;
+  border: 2px solid #fff;
+  border-radius: 50%;
+}
+
+.tft-dest-marker {
+  width: 10px;
+  height: 10px;
+  background: #ef5350;
+  border: 1.5px solid #fff;
+  border-radius: 50%;
+}

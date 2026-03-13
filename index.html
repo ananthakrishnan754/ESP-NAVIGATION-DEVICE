@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f0f14">
+  <meta name="description" content="BikeNav — ESP8266 TFT Navigation System">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>BikeNav</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- ══════ TOP STATUS BAR ══════ -->
+  <header id="topBar">
+    <div class="top-left">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="5.5" cy="17.5" r="3.5" />
+          <circle cx="18.5" cy="17.5" r="3.5" />
+          <path d="M15 6l-4 11M5.5 17.5L9 6h3l3 6h4" />
+        </svg>
+      </div>
+      <span class="app-name">BikeNav</span>
+    </div>
+    <div class="top-right">
+      <div class="status-chip" id="gpsChip" title="GPS Status">
+        <span class="chip-dot gps-dot"></span>
+        <span class="chip-text">GPS</span>
+      </div>
+      <div class="status-chip" id="wsChip" title="ESP8266 Status">
+        <span class="chip-dot ws-dot"></span>
+        <span class="chip-text">ESP8266</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════ BIG UI MAP ══════ -->
+  <div id="uiMap"></div>
+
+  <!-- ══════ HIDDEN TFT RENDER TARGETS ══════ -->
+  <div id="tftRenderWrap">
+    <div class="preview-label">1.8" TFT Preview</div>
+    <!-- The actual Leaflet map instance for the TFT -->
+    <div id="tftMap"></div>
+
+    <!-- Turn arrow overlay for the TFT -->
+    <canvas id="tftArrowCanvas" width="40" height="40"></canvas>
+
+    <!-- Distance text overlay for the TFT -->
+    <div id="tftDistance">--</div>
+
+    <!-- Final composite canvas (where we extract RGB565 from) -->
+    <canvas id="tftComposite" width="128" height="160"></canvas>
+  </div>
+
+  <!-- ══════ BOTTOM NAVIGATION PANEL ══════ -->
+  <div id="navPanel" class="nav-panel">
+    <div class="panel-handle" id="panelHandle"><span></span></div>
+
+    <!-- Turn instruction -->
+    <div class="turn-row" id="turnRow">
+      <div class="turn-icon-box" id="turnIconBox">
+        <canvas id="uiArrowCanvas" width="52" height="52"></canvas>
+      </div>
+      <div class="turn-info">
+        <span class="turn-distance" id="uiTurnDistance">--</span>
+        <span class="turn-street" id="uiTurnStreet">Tap map to set destination</span>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat">
+        <span class="stat-value" id="etaValue">--</span>
+        <span class="stat-label">ETA</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="speedValue">0</span>
+        <span class="stat-label">km/h</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="remainValue">--</span>
+        <span class="stat-label">Left</span>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-track">
+        <div class="progress-fill" id="progressBar"></div>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="btn-row">
+      <button class="nav-btn accent" id="btnStart">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+          <polygon points="5,3 19,12 5,21" />
+        </svg>
+        Navigate
+      </button>
+      <button class="nav-btn danger hidden" id="btnStop">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+          <rect x="5" y="5" width="14" height="14" rx="2" />
+        </svg>
+        Stop
+      </button>
+      <button class="nav-btn glass" id="btnConnect">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" />
+        </svg>
+        ESP-WiFi
+      </button>
+      <button class="nav-btn glass" id="btnRecenter">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+        </svg>
+        Center
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════ TOAST CONTAINER ══════ -->
+  <div id="toastContainer"></div>
+
+  <!-- ══════ SCRIPTS ══════ -->
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <!-- html2canvas to capture the leaflet map dom to canvas fast -->
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+  <!-- App modules -->
+  <script src="websocket.js"></script>
+  <script src="routing.js"></script>
+  <script src="map_renderer.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
