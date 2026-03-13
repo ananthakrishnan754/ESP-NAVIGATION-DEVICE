@@ -7,7 +7,12 @@
 
 const WSManager = (() => {
 
-    const WS_URL = 'ws://192.168.4.1:81';
+    let _wsUrl = '192.168.4.1';
+
+    /* ── Set IP ── */
+    function setIP(ip) {
+        if (ip) _wsUrl = ip;
+    }
 
     /* ── State ── */
     let ws = null;
@@ -20,7 +25,7 @@ const WSManager = (() => {
         return new Promise((resolve, reject) => {
             // Browser must be on same WiFi network
             try {
-                ws = new WebSocket(WS_URL);
+                ws = new WebSocket(`ws://${_wsUrl}:81`);
                 ws.binaryType = "arraybuffer";
             } catch (err) {
                 return reject(new Error('WebSocket init failed (Are you on ESP WiFi?)'));
@@ -89,6 +94,6 @@ const WSManager = (() => {
     }
 
     /* ── Public API ── */
-    return { connect, disconnect, sendChunk, isConnected };
+    return { connect, disconnect, sendChunk, isConnected, setIP };
 
 })();

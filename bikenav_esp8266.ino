@@ -11,8 +11,8 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 // ----------------------------------------------------
 // Constants & Settings
 // ----------------------------------------------------
-const char *ssid = "BikeNav_AP";
-const char *password = "12345678"; // Min 8 chars for WPA2
+const char *ssid = "Your_Hotspot_Name"; // Change to your phone's hotspot name
+const char *password = "12345678";    // Change to your phone's hotspot password
 
 // The chunk settings must match what the phone web app sends.
 // The web app sends chunks of 16 horizontal rows.
@@ -36,20 +36,43 @@ void setup() {
   
   tft.drawString("Starting WiFi...", TFT_WIDTH/2, 60, 2);
 
-  // 2. Setup WiFi Access Point
-  WiFi.softAP(ssid, password);
-  IPAddress IP = WiFi.softAPIP();
+  // 2. Connect to WiFi Hotspot (Station Mode)
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
   
-  Serial.print("AP IP address: ");
+  Serial.print("Connecting to Hotspot: ");
+  Serial.println(ssid);
+
+  int dotCount = 0;
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+    tft.fillScreen(TFT_BLACK);
+    tft.drawString("Connecting...", TFT_WIDTH/2, 60, 2);
+    tft.drawString(ssid, TFT_WIDTH/2, 80, 1);
+    
+    // Draw loading dots
+    String dots = "";
+    for(int i=0; i<dotCount; i++) dots += ".";
+    tft.drawString(dots, TFT_WIDTH/2, 100, 2);
+    
+    dotCount++;
+    if(dotCount > 4) dotCount = 0;
+  }
+  
+  IPAddress IP = WiFi.localIP();
+  Serial.println("\nWiFi Connected!");
+  Serial.print("ESP8266 IP address: ");
   Serial.println(IP);
 
   // Update TFT with WiFi info
   tft.fillScreen(TFT_BLACK);
-  tft.drawString("BikeNav Ready", TFT_WIDTH/2, 40, 2);
-  tft.drawString("Connect Phone:", TFT_WIDTH/2, 70, 1);
-  tft.drawString(ssid, TFT_WIDTH/2, 85, 2);
-  tft.drawString(IP.toString(), TFT_WIDTH/2, 105, 1);
-  tft.fillCircle(TFT_WIDTH/2, 140, 5, TFT_YELLOW);
+  tft.drawString("Connected!", TFT_WIDTH/2, 30, 2);
+  tft.drawString("Enter this IP in WebApp:", TFT_WIDTH/2, 60, 1);
+  tft.setTextColor(TFT_GREEN, TFT_BLACK);
+  tft.drawString(IP.toString(), TFT_WIDTH/2, 85, 2);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.fillCircle(TFT_WIDTH/2, 120, 5, TFT_YELLOW);
 
   // 3. Start WebSocket Server
   webSocket.begin();

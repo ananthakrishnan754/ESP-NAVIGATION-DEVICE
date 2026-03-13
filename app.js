@@ -254,7 +254,14 @@ function setupUI() {
 
   document.getElementById('btnConnect').addEventListener('click', async () => {
     try {
-      toast('Connecting to ESP8266 WebSocket...');
+      const savedIP = localStorage.getItem('esp_ip') || '192.168.4.1';
+      const userIP = prompt('Enter ESP8266 IP Address (shown on TFT screen):', savedIP);
+      if (!userIP) return; // User cancelled
+
+      localStorage.setItem('esp_ip', userIP);
+      WSManager.setIP(userIP);
+
+      toast(`Connecting to ${userIP}...`);
       const name = await WSManager.connect(() => {
         document.querySelector('.ws-dot').classList.remove('active');
         document.getElementById('wsChip').classList.remove('active');
