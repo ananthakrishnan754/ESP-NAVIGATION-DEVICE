@@ -190,11 +190,14 @@ body {
 
 /* We need the tft map to be exactly 128x160 to snapshot it */
 #tftMap {
-  position: absolute;
-  left: -9999px;
-  top: -9999px;
+  position: fixed;
+  left: 0;
+  top: 0;
   width: 128px;
   height: 160px;
+  z-index: -1;
+  opacity: 0.01;
+  pointer-events: none;
 }
 
 /* The final composite preview */

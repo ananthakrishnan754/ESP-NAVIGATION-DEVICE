@@ -162,6 +162,12 @@ const MapRenderer = (() => {
 
         } catch (err) {
             console.warn('Frame generation error:', err);
+            // Show error on the preview canvas for debugging
+            ctx.fillStyle = '#FF0000';
+            ctx.fillRect(0, 0, TFT_W, TFT_H);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '10px Arial';
+            ctx.fillText('Render Error', 10, 80);
         }
 
         isGenerating = false;
