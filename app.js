@@ -82,30 +82,42 @@ function initMaps() {
   });
 
   // Start GPS
+  let mapCentered = false;
   if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(pos => {
-      const ll = [pos.coords.latitude, pos.coords.longitude];
-      App.uiMap.setView(ll, 16);
-      App.tftMap.setView(ll, 16);
+    const onLocationSuccess = (pos) => {
+      App.currentPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      App.speed = pos.coords.speed || 0;
+      const ll = [App.currentPos.lat, App.currentPos.lng];
+
+      document.querySelector('.gps-dot').classList.add('active');
+      document.getElementById('gpsChip').classList.add('active');
       App.uiBikeMarker.setLatLng(ll);
-    }, null, { enableHighAccuracy: true });
+      MapRenderer.setBikeState(App.currentPos.lat, App.currentPos.lng, App.speed);
 
-    App.gpsWatchId = navigator.geolocation.watchPosition(
-      pos => {
-        App.currentPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        App.speed = pos.coords.speed || 0;
-        document.querySelector('.gps-dot').classList.add('active');
-        document.getElementById('gpsChip').classList.add('active');
+      if (!mapCentered) {
+        App.uiMap.setView(ll, 16);
+        App.tftMap.setView(ll, 17);
+        mapCentered = true;
+        toast('Location found!');
+      }
+    };
 
-        App.uiBikeMarker.setLatLng([App.currentPos.lat, App.currentPos.lng]);
-        // Update global var for canvas renderer
-        MapRenderer.setBikeState(App.currentPos.lat, App.currentPos.lng, App.speed);
-      },
-      err => { document.querySelector('.gps-dot').classList.remove('active'); },
-      { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 }
-    );
+    const onLocationError = (err) => {
+      console.warn('Geolocation error:', err);
+      if (err.code === 1) toast('Location permission denied. Please enable GPS.');
+      else if (err.code === 3) toast('GPS timeout. Try moving to an open area.');
+      document.querySelector('.gps-dot').classList.remove('active');
+      document.getElementById('gpsChip').classList.remove('active');
+    };
+
+    navigator.geolocation.getCurrentPosition(onLocationSuccess, onLocationError, { enableHighAccuracy: true });
+    App.gpsWatchId = navigator.geolocation.watchPosition(onLocationSuccess, onLocationError, { 
+      enableHighAccuracy: true, 
+      maximumAge: 2000, 
+      timeout: 10000 
+    });
   } else {
-    toast('Geolocation not available');
+    toast('Geolocation not supported by your browser');
   }
 }
 
