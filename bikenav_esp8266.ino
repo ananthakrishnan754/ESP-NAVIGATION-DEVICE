@@ -11,8 +11,8 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 // ----------------------------------------------------
 // Constants & Settings
 // ----------------------------------------------------
-const char *ssid = "Your_Hotspot_Name"; // Change to your phone's hotspot name
-const char *password = "12345678";    // Change to your phone's hotspot password
+const char *ssid = "iqooneo71"; // Change to your phone's hotspot name
+const char *password = "iqooneo7";    // Change to your phone's hotspot password
 
 // The chunk settings must match what the phone web app sends.
 // The web app sends chunks of 16 horizontal rows.

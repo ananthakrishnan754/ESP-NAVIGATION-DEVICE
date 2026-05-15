@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0f0f14">
-  <meta name="description" content="BikeNav — ESP8266 TFT Navigation System">
+  <meta name="description" content="BikeNav — ESP32 BLE TFT Navigation System">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>BikeNav</title>
@@ -45,9 +45,9 @@
         <span class="chip-dot gps-dot"></span>
         <span class="chip-text">GPS</span>
       </div>
-      <div class="status-chip" id="wsChip" title="ESP8266 Status">
+      <div class="status-chip" id="wsChip" title="ESP32 BLE Status">
         <span class="chip-dot ws-dot"></span>
-        <span class="chip-text">ESP8266</span>
+        <span class="chip-text">ESP32 BLE</span>
       </div>
     </div>
   </header>
@@ -123,11 +123,7 @@
         </svg>
         Stop
       </button>
-      <button class="nav-btn glass" id="btnConnect">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" />
-        </svg>
-        ESP-WiFi
+        Connect BLE
       </button>
       <button class="nav-btn glass" id="btnRecenter">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
@@ -149,7 +145,7 @@
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
   <!-- App modules -->
-  <script src="websocket.js"></script>
+  <script src="ble_manager.js"></script>
   <script src="routing.js"></script>
   <script src="map_renderer.js"></script>
   <script src="app.js"></script>

@@ -9,7 +9,7 @@ const MapRenderer = (() => {
 
     const TFT_W = 128;
     const TFT_H = 160;
-    const CHUNK_ROWS = 8;  // 20 chunks of 8 rows = 160 rows
+    const CHUNK_ROWS = 1;  // BLE efficiency: 1 row = 260 bytes (fits in 512 MTU)
 
     let isGenerating = false;
     let turnDirection = null;
@@ -155,7 +155,7 @@ const MapRenderer = (() => {
             ctx.restore();
 
             // 4. Extract pixels and stream if WS connected
-            if (WSManager.isConnected()) {
+            if (BLEManager.isConnected()) {
                 const imgData = ctx.getImageData(0, 0, TFT_W, TFT_H).data;
                 _streamRGB565Chunks(imgData);
             }
@@ -198,14 +198,14 @@ const MapRenderer = (() => {
                 // Convert RGB888 to RGB565
                 const rgb565 = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
 
-                // Store big-endian (TFT_eSPI uses this by default over SPI)
-                buffer[4 + (i * 2)] = rgb565 >> 8;   // High byte
-                buffer[4 + (i * 2) + 1] = rgb565 & 0xFF; // Low byte
+                // Store little-endian (Native for ESP32)
+                buffer[4 + (i * 2)] = rgb565 & 0xFF; // Low byte
+                buffer[4 + (i * 2) + 1] = rgb565 >> 8;   // High byte
             }
 
             // Queue the chunk to send
             // WSManager will drop it if the buffer is flooding
-            WSManager.sendChunk(buffer);
+            BLEManager.sendChunk(buffer);
         }
     }
 

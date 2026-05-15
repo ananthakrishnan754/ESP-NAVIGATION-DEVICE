@@ -32,7 +32,7 @@ const App = {
   destination: null,
 
   navHz: 2,        // GPS updates are slow
-  streamHz: 5,     // Stream Canvas to ESP8266 5 times a second (200 KB/s)
+  streamHz: 2,     // Stream Canvas to ESP32 over BLE (reduced for bandwidth)
 };
 
 /* ──────────── HELPERS ──────────── */
@@ -254,18 +254,11 @@ function setupUI() {
 
   document.getElementById('btnConnect').addEventListener('click', async () => {
     try {
-      const savedIP = localStorage.getItem('esp_ip') || '192.168.4.1';
-      const userIP = prompt('Enter ESP8266 IP Address (shown on TFT screen):', savedIP);
-      if (!userIP) return; // User cancelled
-
-      localStorage.setItem('esp_ip', userIP);
-      WSManager.setIP(userIP);
-
-      toast(`Connecting to ${userIP}...`);
-      const name = await WSManager.connect(() => {
+      toast(`Connecting to BikeNav via BLE...`);
+      const name = await BLEManager.connect(() => {
         document.querySelector('.ws-dot').classList.remove('active');
         document.getElementById('wsChip').classList.remove('active');
-        toast('WebSocket disconnected');
+        toast('BLE disconnected');
       });
       document.querySelector('.ws-dot').classList.add('active');
       document.getElementById('wsChip').classList.add('active');
@@ -273,10 +266,10 @@ function setupUI() {
 
       // Start streaming immediately if connected
       if (!App.navigating) {
-        setInterval(() => MapRenderer.generateAndStreamFrame(), 100);
+        setInterval(() => MapRenderer.generateAndStreamFrame(), 500);
       }
     } catch (err) {
-      toast(err.message);
+      toast('BLE Error: ' + err.message);
     }
   });
 
